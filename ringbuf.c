@@ -67,17 +67,14 @@ RB_Status_t rb_write(RingBuffer *rb, uint8_t data)
 
     rb->buffer[rb->head] = data;
 
-    /* BUFFER_SIZE is 8 (power of 2).
-     * Using modulo (%) wraps the index to 0 when
-     * the end of the buffer is reached.
-     *
-     * Bonus optimization:
-     * rb->head = (rb->head + 1U) & (BUFFER_SIZE - 1U);
-     *
-     * Bitwise AND is faster than modulo on MCUs
-     * without a hardware divider.
+    /* Bonus Optimization:
+     * BUFFER_SIZE is 8 (power of 2).
+     * Using bitwise AND instead of modulo is faster
+     * on microcontrollers without a hardware divider.
+     * This technique works only when BUFFER_SIZE
+     * is a power of 2.
      */
-    rb->head = (rb->head + 1U) % BUFFER_SIZE;
+    rb->head = (rb->head + 1U) & (BUFFER_SIZE - 1U);
 
     rb->count++;
 
@@ -94,14 +91,14 @@ RB_Status_t rb_read(RingBuffer *rb, uint8_t *data)
 
     *data = rb->buffer[rb->tail];
 
-    /* BUFFER_SIZE is 8 (power of 2).
-     * Using modulo (%) wraps the index to 0 when
-     * the end of the buffer is reached.
-     *
-     * Bonus optimization:
-     * rb->tail = (rb->tail + 1U) & (BUFFER_SIZE - 1U);
+    /* Bonus Optimization:
+     * BUFFER_SIZE is 8 (power of 2).
+     * Using bitwise AND instead of modulo is faster
+     * on microcontrollers without a hardware divider.
+     * This technique works only when BUFFER_SIZE
+     * is a power of 2.
      */
-    rb->tail = (rb->tail + 1U) % BUFFER_SIZE;
+    rb->tail = (rb->tail + 1U) & (BUFFER_SIZE - 1U);
 
     rb->count--;
 
@@ -151,7 +148,7 @@ int main(void)
     }
 
     /* Reuse freed locations to demonstrate wrap-around */
-    uint8_t new_data[] = {0x49U, 0x4AU, 0x4BU};
+    const uint8_t new_data[] = {0x49U, 0x4AU, 0x4BU};
 
     for (uint8_t i = 0U; i < 3U; i++)
     {
@@ -181,4 +178,3 @@ int main(void)
 
     return 0;
 }
-
